@@ -144,7 +144,6 @@ uint64_t string_length(char* s);
 char*    string_copy(char* s);
 void     string_reverse(char* s);
 uint64_t string_compare(char* s, char* t);
-
 uint64_t atoi(char* s);
 char*    itoa(uint64_t n, char* s, uint64_t b, uint64_t a);
 
@@ -210,6 +209,9 @@ uint64_t CHAR_EXCLAMATION  = '!';
 uint64_t CHAR_LT           = '<';
 uint64_t CHAR_GT           = '>';
 uint64_t CHAR_BACKSLASH    =  92; // ASCII code 92 = backslash
+uint64_t CHAR_MINUS      = '-';
+uint64_t CHAR_RSBRA      = ']';
+uint64_t CHAR_LSBRA         = '[';
 
 uint64_t CPUBITWIDTH = 64;
 
@@ -311,6 +313,101 @@ void reset_library() {
   number_of_written_characters = 0;
 }
 
+
+// -----------------------------------------------------------------
+// ---------------------------ASSEMBLY SYMBOLS ---------------------
+// -----------------------------------------------------------------
+
+
+uint64_t MAX_IMM_SIZE = 20;
+
+uint64_t MAX_ADRRESS_SIZE = 20;
+
+uint64_t MAX_REGISTER_SIZE = 5;
+
+uint64_t MAX_INSTRUCTION_SIZE = 5;
+
+
+//SYMBOLS
+uint64_t SYM_ADDR = 1; // Address symbol
+uint64_t SYM_DD = 2;  //':' SYMBOL
+uint64_t SYM_INST = 3; // Instruction symbol (lui, add, ....)
+uint64_t SYM_REG = 4; //register symbol
+uint64_t SYM_IMM = 6; // immidiate symbols
+uint64_t SYM_LCRO = 9; // '['
+uint64_t SYM_RCRO = 10; // ']'
+
+//INSTRUCTION TYPES
+uint64_t INST_TYPE = 0;
+uint64_t INST_SUB_TYPE = 0;
+
+
+
+uint64_t INIT = 20;
+uint64_t MEMORY = 21;
+uint64_t ARITH = 22;
+uint64_t CONTROL = 23;
+uint64_t SYSTEM = 24;
+
+uint64_t LUI   = 1;
+uint64_t ADDI  = 2;
+uint64_t ADD   = 3;
+uint64_t SUB   = 4;
+uint64_t MUL   = 5;
+uint64_t DIVU  = 6;
+uint64_t REMU  = 7;
+uint64_t SLTU  = 8;
+uint64_t LD    = 9;
+uint64_t SD    = 10;
+uint64_t BEQ   = 11;
+uint64_t JAL   = 12;
+uint64_t JALR  = 13;
+uint64_t ECALL = 14;
+uint64_t NOP   = 15;
+uint64_t QUAD = 16;
+
+uint64_t NUMBEROFINSTRUCTIONS = 16;
+
+
+// -----------------------------------------------------------------
+// ---------------------------- PROCEDURES ----------------------------
+// -----------------------------------------------------------------
+
+//MAIN PROCEDURES
+void assembly_compile();
+void compile_assembly();
+
+
+//SCANNER & PARSER
+void reset_assembly_scanner();
+void reset_assembly_parser();
+void get_assembly_symbol();
+
+
+void compile_init();
+void compile_arith();
+void compile_memory();
+void compile_control();
+
+void compile_lui();
+void compile_addi();
+void compile_beq();
+void compile_jalr();
+void compile_jal();
+void compile_quad();
+
+
+void get_instruction_type();
+uint64_t look_for_address();
+uint64_t is_character_zero();
+uint64_t is_character_dot();
+uint64_t is_character_x();
+uint64_t is_character_letter_or_digit();
+uint64_t is_valid_16();
+uint64_t is_character_dollar();
+uint64_t is_character_double_dots();
+
+
 // *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~ *~*~
 // -----------------------------------------------------------------
 // ---------------------    C O M P I L E R    ---------------------
@@ -390,11 +487,6 @@ uint64_t SYM_GEQ          = 27; // >=
 uint64_t SYM_INT      = 28; // int
 uint64_t SYM_CHAR     = 29; // char
 uint64_t SYM_UNSIGNED = 30; // unsigned
-
-// symbols for shifting
-
-uint64_t SYM_SLL   = 31; // << Shift Left Logical
-uint64_t SYM_SRL   = 32; // >> Shift Right Logical
 
 uint64_t* SYMBOLS; // strings representing symbols
 
@@ -594,7 +686,6 @@ uint64_t is_literal();
 uint64_t is_star_or_div_or_modulo();
 uint64_t is_plus_or_minus();
 uint64_t is_comparison();
-uint64_t is_sll_or_srl();
 
 uint64_t look_for_factor();
 uint64_t look_for_statement();
@@ -817,7 +908,6 @@ uint64_t OP_BRANCH = 99;  // 1100011, B format (BEQ)
 uint64_t OP_JALR   = 103; // 1100111, I format (JALR)
 uint64_t OP_JAL    = 111; // 1101111, J format (JAL)
 uint64_t OP_SYSTEM = 115; // 1110011, I format (ECALL)
-//uint64_t OP_SHIFT  = 115; // 1110011, I format (ECALL)
 
 // f3-codes
 uint64_t F3_NOP   = 0; // 000
@@ -833,9 +923,6 @@ uint64_t F3_SD    = 3; // 011
 uint64_t F3_BEQ   = 0; // 000
 uint64_t F3_JALR  = 0; // 000
 uint64_t F3_ECALL = 0; // 000
-uint64_t F3_SLL   = 0; // 000
-uint64_t F3_SRL   = 0; // 000
-
 
 // f7-codes
 uint64_t F7_ADD  = 0;  // 0000000
@@ -844,8 +931,6 @@ uint64_t F7_SUB  = 32; // 0100000
 uint64_t F7_DIVU = 1;  // 0000001
 uint64_t F7_REMU = 1;  // 0000001
 uint64_t F7_SLTU = 0;  // 0000000
-uint64_t F7_SLL  = 0;  // 0000000
-uint64_t F7_SRL  = 0;  // 0000000
 
 // f12-codes (immediates)
 uint64_t F12_ECALL = 0; // 000000000000
@@ -898,9 +983,6 @@ void emit_beq(uint64_t rs1, uint64_t rs2, uint64_t immediate);
 
 void emit_jal(uint64_t rd, uint64_t immediate);
 void emit_jalr(uint64_t rd, uint64_t rs1, uint64_t immediate);
-
-void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2);
-void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2);
 
 void emit_ecall();
 
@@ -957,8 +1039,6 @@ uint64_t ic_beq   = 0;
 uint64_t ic_jal   = 0;
 uint64_t ic_jalr  = 0;
 uint64_t ic_ecall = 0;
-uint64_t ic_sll   = 0;
-uint64_t ic_srl   = 0;
 
 uint64_t* binary        = (uint64_t*) 0; // binary of code and data segments
 uint64_t  binary_length = 0;             // length of binary in bytes including data segment
@@ -1577,6 +1657,7 @@ char*    replace_extension(char* filename, uint64_t e);
 uint64_t monster(uint64_t* to_context);
 
 uint64_t is_boot_level_zero();
+void     boot_loader();
 
 uint64_t selfie_run(uint64_t machine);
 
@@ -1716,6 +1797,810 @@ void init_selfie(uint64_t argc, uint64_t* argv) {
 // -----------------------------------------------------------------
 // ----------------------- LIBRARY PROCEDURES ----------------------
 // -----------------------------------------------------------------
+
+
+
+
+
+// ----------------------------------------------------
+
+void reset_assembly_scanner() {
+  line_number = 1;
+  get_character();
+
+}
+
+
+void reset_assembly_parser() {
+  get_assembly_symbol();
+}
+
+
+uint64_t look_for_address(){
+  if (symbol == SYM_ADDR) return 0;
+  return 1;
+}
+
+void assembly_compile() {
+  source_name = "assembly_tobinary";
+
+  binary_name = source_name;
+
+  // allocate memory for storing binary
+  binary       = zalloc(MAX_BINARY_LENGTH);
+  binary_length = 0;
+
+  // reset code length
+  code_length = 0;
+
+  // allocate zeroed memory for storing source code line numbers
+  code_line_number = zalloc(MAX_CODE_LENGTH / INSTRUCTIONSIZE * SIZEOFUINT64);
+  data_line_number = zalloc(MAX_DATA_LENGTH / REGISTERSIZE * SIZEOFUINT64);
+
+  source_name = get_argument();
+
+  print("\n-----------------------------------------------------");
+  printf1("\nselfie compiling %s from assembly \n", source_name);
+
+  source_fd = open(source_name, O_RDONLY, 0);
+
+
+  reset_assembly_scanner();
+  reset_assembly_parser();
+
+  compile_assembly();
+
+
+}
+
+
+
+void compile_assembly() {
+
+  while (symbol != SYM_EOF) {
+    while (look_for_address()) {
+      syntax_error_unexpected();
+
+      if (symbol == SYM_EOF){
+        print("\nAddress Missing\n");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+      else
+        get_assembly_symbol();
+    }
+    if(symbol == SYM_ADDR){
+      get_assembly_symbol();
+      if(symbol == SYM_DD){
+        get_assembly_symbol();
+        if(symbol == SYM_INST){
+          if(INST_TYPE == SYSTEM){
+            if(INST_SUB_TYPE == ECALL){
+
+              //emit_ecall();
+            }
+            else if(INST_SUB_TYPE == QUAD){
+              compile_quad();
+            }
+
+            else if(INST_SUB_TYPE == NOP){
+              //emit_nop()();;
+            }
+
+          }
+
+          else if(INST_TYPE == INIT){
+            compile_init();
+          }
+          else if(INST_TYPE == MEMORY){
+            compile_memory();
+          }
+          else if(INST_TYPE == ARITH){
+            compile_arith();
+          }
+          else if(INST_TYPE == CONTROL)
+            compile_control();
+
+          else {
+            println("Syntax ERROR (Instruction unrecognised)");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }
+        else {
+          println("Syntax ERROR (Instruction missing)");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }
+      else {
+        println("Double dots missing");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }
+    else {
+      println("Syntax ERROR (Address missing or unrecognised)");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+    get_assembly_symbol();
+  }
+  println();
+  print("Compilation terminated");
+  println();
+}
+
+void get_instruction_type(){
+
+  if(string_compare(string,"lui")) {
+    INST_TYPE = INIT;
+    INST_SUB_TYPE = LUI;
+  }else if(string_compare(string,"addi")) {
+    INST_TYPE = INIT;
+    INST_SUB_TYPE = ADDI;
+  }else if(string_compare(string,"add")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = ADD;
+  }else if(string_compare(string,"sub")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = SUB;
+  }else if(string_compare(string,"mul")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = MUL;
+  }else if(string_compare(string,"divu")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = DIVU;
+  }else if(string_compare(string,"sltu")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = SLTU;
+  }else if(string_compare(string,"remu")) {
+    INST_TYPE = ARITH;
+    INST_SUB_TYPE = REMU;
+  }else if(string_compare(string,"ecall")) {
+    INST_TYPE = SYSTEM;
+    INST_SUB_TYPE = ECALL;
+  }else if(string_compare(string,"nop")) {
+    INST_TYPE = SYSTEM;
+    INST_SUB_TYPE = NOP;
+  }else if(string_compare(string,"quad")) {
+    INST_TYPE = SYSTEM;
+    INST_SUB_TYPE = QUAD;
+  }else if(string_compare(string,"jal")) {
+    INST_TYPE = CONTROL;
+    INST_SUB_TYPE = JAL;
+  }else if(string_compare(string,"jalr")) {
+    INST_TYPE = CONTROL;
+    INST_SUB_TYPE = JALR;
+  }else if(string_compare(string,"beq")) {
+    INST_TYPE = CONTROL;
+    INST_SUB_TYPE = BEQ;
+  }else if(string_compare(string,"ld")) {
+      INST_TYPE = MEMORY;
+      INST_SUB_TYPE = LD;
+    }else if(string_compare(string,"sd")) {
+        INST_TYPE = MEMORY;
+        INST_SUB_TYPE = SD;
+      }
+  else {
+    println("Intruction error !");
+    exit(EXITCODE_PARSERERROR);
+  }
+
+}
+
+void get_assembly_symbol() {
+  uint64_t i;
+  // reset previously scanned symbol
+  symbol = SYM_EOF;
+  if (find_next_character() != CHAR_EOF) {
+      if(is_character_zero()){
+        get_character();
+        if(is_character_x()){
+          get_character();
+          string = string_alloc(MAX_ADRRESS_SIZE);
+          i = 0;
+          while(is_valid_16()){
+
+            if(i >= MAX_ADRRESS_SIZE){
+
+              syntax_error_message("Address too long");
+              exit(EXITCODE_SCANNERERROR);
+            }
+            store_character(string, i, character);
+            i = i + 1;
+            get_character();
+          }
+          store_character(string, i, 0); // null-terminated string
+          symbol = SYM_ADDR;
+
+
+        }else
+
+          if (is_character_digit() ) {
+            // accommodate integer and null for termination
+            string = string_alloc(MAX_IMM_SIZE);
+
+            i = 0;
+
+            while (is_character_digit()) {
+              if (i >= MAX_IMM_SIZE) {
+                syntax_error_message("immidiate out of bound");
+                exit(EXITCODE_SCANNERERROR);
+              }
+
+              store_character(string, i, character);
+
+              i = i + 1;
+
+              get_character();
+            }
+
+            store_character(string, i, 0); // null-terminated string
+              literal = atoi(string);
+            symbol = SYM_IMM;
+            //TODO something
+
+          }else{
+            literal = 0;
+            symbol = SYM_IMM;
+
+
+          }
+      }
+      else if(is_character_double_dots()){
+        symbol = SYM_DD;
+        get_character();
+
+      }
+      else if(is_character_letter()){
+        string = string_alloc(MAX_INSTRUCTION_SIZE);
+        i = 0;
+        while(is_character_letter()){
+          if (i >= MAX_INSTRUCTION_SIZE) {
+            syntax_error_message("identifier too long");
+
+            exit(EXITCODE_SCANNERERROR);
+          }
+
+          store_character(string, i, character);
+
+          i = i + 1;
+
+          get_character();
+        }
+        store_character(string, i, 0); // null-terminated string
+        symbol = SYM_INST;
+        get_instruction_type();
+
+
+      }else if (is_character_digit() ) {
+        // accommodate integer and null for termination
+        string = string_alloc(MAX_IMM_SIZE);
+
+        i = 0;
+
+        while (is_character_digit()) {
+          if (i >= MAX_IMM_SIZE) {
+            syntax_error_message("immidiate out of bound");
+            exit(EXITCODE_SCANNERERROR);
+          }
+
+          store_character(string, i, character);
+
+          i = i + 1;
+
+          get_character();
+        }
+
+        store_character(string, i, 0); // null-terminated string
+
+          literal = atoi(string);
+        symbol = SYM_IMM;
+        //TODO something
+
+      }
+      else if(is_character_dollar()){
+        string = string_alloc(MAX_REGISTER_SIZE);
+
+        i = 0;
+        get_character();
+        while (is_character_letter_or_digit()) {
+          if (i >= MAX_REGISTER_SIZE) {
+            syntax_error_message("regiter too long");
+
+            exit(EXITCODE_SCANNERERROR);
+          }
+
+          store_character(string, i, character);
+
+          i = i + 1;
+
+          get_character();
+        }
+
+        store_character(string, i, 0); // null-terminated string
+
+        symbol = SYM_REG;
+        //TODO something
+
+      }else
+
+     if(is_character_dot()){
+       get_character();
+        string = string_alloc(MAX_INSTRUCTION_SIZE);
+        i = 0;
+        while(is_character_letter()){
+          if (i >= MAX_INSTRUCTION_SIZE) {
+            syntax_error_message("identifier too long");
+
+            exit(EXITCODE_SCANNERERROR);
+          }
+
+          store_character(string, i, character);
+
+          i = i + 1;
+
+          get_character();
+        }
+        store_character(string, i, 0); // null-terminated string
+
+        symbol = SYM_INST;
+        get_instruction_type();
+
+      }else if(character == CHAR_RPARENTHESIS){
+        get_character();
+        symbol = SYM_RPARENTHESIS;
+      }else if(character == CHAR_LPARENTHESIS){
+        get_character();
+        symbol = SYM_LPARENTHESIS;
+      }else if(character == CHAR_COMMA){
+        get_character();
+        symbol = SYM_COMMA;
+      }else if(character == CHAR_RSBRA){
+        get_character();
+        symbol = SYM_RCRO;
+      }else if(character == CHAR_LSBRA){
+        get_character();
+        symbol = SYM_LCRO;
+      }else if(character == CHAR_MINUS){
+        get_character();
+        symbol = SYM_MINUS;
+      }else{
+        print_line_number("syntax error", line_number);
+        print("found unknown character ");
+        print_character(character);
+        println();
+
+        exit(EXITCODE_SCANNERERROR);
+
+      }
+
+  }
+}
+
+void compile_init(){
+  // lui $reg,addr
+  // addi $reg,$reg,[-]imm
+  if(INST_SUB_TYPE == LUI){
+    compile_lui();
+  }else if (INST_SUB_TYPE == ADDI){
+    compile_addi();
+  }
+  else{
+    println("syntax Error ! ");
+    exit(EXITCODE_PARSERERROR);
+  }
+}
+
+void compile_lui(){
+  //LUI $reg,addr
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_ADDR){
+        //TODO convert to binary
+
+        //emit_lui()
+      }
+      else{
+        println("syntax Error ! ");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      println("syntax Error ! ");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+
+  }else{
+    println("syntax Error ! ");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+
+}
+
+void compile_addi(){
+  //ADDI
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg types
+    get_assembly_symbol();
+      if(symbol == SYM_COMMA){
+        get_assembly_symbol();
+        if(symbol == SYM_REG){
+          //TODO get reg types
+          get_assembly_symbol();
+          if(symbol == SYM_COMMA){
+            get_assembly_symbol();
+            if(symbol == SYM_MINUS){
+              //TODO encode negative numbers
+              get_assembly_symbol();
+            }
+            if(symbol == SYM_IMM){
+              //TODO to binary
+
+              //emit_addi();
+            }
+            else{
+              println("syntax Error ! ");
+              exit(EXITCODE_PARSERERROR);
+
+            }
+          }else{
+            println("syntax Error ! ");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          println("syntax Error ! ");
+          exit(EXITCODE_PARSERERROR);
+        }
+
+      }else{
+        println("syntax Error ! ");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+
+  }else{
+    println("syntax Error ! ");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+void  compile_memory(){
+  //ld/sd $reg,[-]imm($reg)
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_MINUS){
+        //TODO encode negative numbers
+        get_assembly_symbol();
+
+      }
+      if(symbol == SYM_IMM){
+        //TODO encode immidiate values to binary
+        get_assembly_symbol();
+        if(symbol == SYM_LPARENTHESIS){
+          get_assembly_symbol();
+          if(symbol == SYM_REG){
+            get_assembly_symbol();
+            if(symbol == SYM_RPARENTHESIS){
+              if(INST_SUB_TYPE == LD){
+                //emit_ld();
+
+
+              }else if(INST_SUB_TYPE == SD){
+                //emit_sd();
+
+              }
+            }else{
+              println("syntax Error ! ");
+              exit(EXITCODE_PARSERERROR);
+
+            }
+          }else{
+            println("syntax Error ! ");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          println("syntax Error ! ");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }else{
+        println("syntax Error ! ");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      println("syntax Error ! ");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+  }else{
+    println("syntax Error ! ");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+
+}
+
+void compile_arith(){
+  //add/mul/sub/divu/remu/sltu $reg,$reg,$reg
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_REG){
+        //TODO
+        get_assembly_symbol();
+        if(symbol == SYM_COMMA){
+          get_assembly_symbol();
+          if(symbol == SYM_REG){
+            if(INST_SUB_TYPE == ADD){
+              //emit_add();
+
+            }else if(INST_SUB_TYPE == SUB){
+              //emit_sub();
+
+            }else if(INST_SUB_TYPE == MUL){
+              //emit_muk();
+            }else if(INST_SUB_TYPE == DIVU){
+              //emit_divu();
+            }else if(INST_SUB_TYPE == REMU){
+              //emit_remu();
+            }else if(INST_SUB_TYPE == SLTU){
+              //emit_sltu();
+
+            }else{
+              print("\nSyntax ERROR \n");
+              exit(EXITCODE_PARSERERROR);
+
+            }
+          }else{
+            print("\nSyntax ERROR \n");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          print("\nSyntax ERROR \n");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }else{
+        print("\nSyntax ERROR \n");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      print("\nSyntax ERROR \n");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+  }else{
+    print("\nSyntax ERROR \n");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+
+void compile_control(){
+  //jal $reg,[-]imm[addr]
+  //jalr $reg,[-]imm($reg)
+  //beq $reg,$reg,[-]imm[addr]
+  if(INST_SUB_TYPE == JAL){
+    compile_jal();
+  }else if (INST_SUB_TYPE == JALR){
+    compile_jalr();
+  }else if (INST_SUB_TYPE == BEQ){
+    compile_beq();
+  }
+  else{
+    println("syntax Error ! ");
+    exit(EXITCODE_PARSERERROR);
+  }
+
+}
+void compile_beq(){
+  //beq $reg,$reg,[-]imm[addr]
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_REG){
+        //TODO get reg type
+        get_assembly_symbol();
+        if(symbol == SYM_COMMA){
+          get_assembly_symbol();
+          if(symbol == SYM_MINUS){
+            //TODO encode minus symbol
+            get_assembly_symbol();
+          }
+          if(symbol == SYM_IMM){
+            //TODO to binary
+            get_assembly_symbol();
+              if(symbol == SYM_LCRO){
+                get_assembly_symbol();
+                if(symbol == SYM_ADDR){
+                  get_assembly_symbol();
+                  if(symbol == SYM_RCRO){
+                    //emit_beq();
+
+                  }else{
+                    print("\nSyntax ERROR \n");
+                    exit(EXITCODE_PARSERERROR);
+
+                  }
+                }else{
+                  print("\nSyntax ERROR \n");
+                  exit(EXITCODE_PARSERERROR);
+
+                }
+              }else{
+                print("\nSyntax ERROR \n");
+                exit(EXITCODE_PARSERERROR);
+
+              }
+
+          }else{
+            print("\nSyntax ERROR \n");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          print("\nSyntax ERROR \n");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }else{
+        print("\nSyntax ERROR \n");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      print("\nSyntax ERROR \n");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+  }else{
+    print("\nSyntax ERROR \n");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+void compile_jal(){
+  //jal $reg,[-]imm[addr]
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_MINUS){
+        //TODO encode negative values
+        get_assembly_symbol();
+      }
+      if(symbol == SYM_IMM){
+        //TODO get imm value
+        get_assembly_symbol();
+        if(symbol == SYM_LCRO){
+          get_assembly_symbol();
+          if(symbol == SYM_ADDR){
+            get_assembly_symbol();
+            if(symbol == SYM_RCRO){
+              //emit_jal();
+
+            }
+          }else{
+            print("\nSyntax ERROR \n");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          print("\nSyntax ERROR \n");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }else{
+        print("\nSyntax ERROR \n");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      print("\nSyntax ERROR \n");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+  }else{
+    print("\nSyntax ERROR \n");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+void compile_jalr(){
+  //jalr $reg,imm($reg)
+  get_assembly_symbol();
+  if(symbol == SYM_REG){
+    //TODO get reg type
+    get_assembly_symbol();
+    if(symbol == SYM_COMMA){
+      get_assembly_symbol();
+      if(symbol == SYM_MINUS){
+        //TODO encode negative values
+        get_assembly_symbol();
+      }
+      if(symbol == SYM_IMM){
+        //TODO get imm value
+        get_assembly_symbol();
+        if(symbol == SYM_LPARENTHESIS){
+          get_assembly_symbol();
+          if(symbol == SYM_REG){
+            //TODO get reg type
+            get_assembly_symbol();
+            if(symbol == SYM_RPARENTHESIS){
+              //emit_jalr();
+
+            }else{
+              print("\nSyntax ERROR \n");
+              exit(EXITCODE_PARSERERROR);
+
+            }
+          }else{
+            print("\nSyntax ERROR \n");
+            exit(EXITCODE_PARSERERROR);
+
+          }
+        }else{
+          print("\nSyntax ERROR \n");
+          exit(EXITCODE_PARSERERROR);
+
+        }
+      }else{
+        print("\nSyntax ERROR \n");
+        exit(EXITCODE_PARSERERROR);
+        print("\nSyntax ERROR \n");
+        exit(EXITCODE_PARSERERROR);
+
+      }
+    }else{
+      print("\nSyntax ERROR \n");
+      exit(EXITCODE_PARSERERROR);
+
+    }
+  }else{
+    print("\nSyntax ERROR \n");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+void compile_quad(){
+  //.quad addr
+  get_assembly_symbol();
+  if(symbol == SYM_ADDR){
+    //emit_chi7aja();
+  }else{
+    print("\nSyntax ERROR \n");
+    exit(EXITCODE_PARSERERROR);
+
+  }
+}
+
+// --------------------------------------------------------
 
 uint64_t two_to_the_power_of(uint64_t p) {
   // assert: 0 <= p < CPUBITWIDTH
@@ -2506,6 +3391,58 @@ uint64_t is_character_new_line() {
     return 1;
   else
     return 0;
+}
+
+
+uint64_t is_character_zero(){
+  if(character == '0') return 1;
+  return 0;
+
+}
+
+uint64_t is_character_x(){
+  if(character == 'x') return 1;
+  return 0;
+
+}
+
+uint64_t is_character_dollar(){
+  if(character == '$') return 1;
+  return 0;
+
+}
+
+uint64_t is_character_double_dots(){
+  if(character == ':') return 1;
+  return 0;
+
+}
+
+uint64_t is_character_letter_or_digit(){
+  if(is_character_digit()) return 1;
+  if(is_character_letter()) return 1;
+  return 0;
+
+}
+
+uint64_t is_valid_16(){
+  // ASCII codes for lower- and uppercase letters are in contiguous intervals
+  if (character >= 'A'){
+    if (character <= 'F')
+      return 1;
+    else
+      return 0;
+  }
+
+
+  if(is_character_digit())
+      return 1;
+  return 0;
+}
+
+uint64_t is_character_dot(){
+  if(character == '.')return 1;
+  return 0;
 }
 
 uint64_t is_character_whitespace() {
@@ -3909,78 +4846,6 @@ uint64_t compile_simple_expression() {
 
   return ltype;
 }
-  
-  uint64_t compile_bitwise_expression() {
-    uint64_t ltype;
-    uint64_t operator_symbol;
-    uint64_t rtype;
-  
-    // assert: n = allocated_temporaries
-  
-    ltype = compile_simple_expression();
-  
-    // assert: allocated_temporaries == n + 1
-  
-    // >> or << ?
-    while (is_sll_or_srl()) {
-      operator_symbol = symbol;
-  
-      get_symbol();
-  
-      rtype = compile_simple_expression();
-  
-      // assert: allocated_temporaries == n + 2
-  
-      if (operator_symbol == SYM_SLL) {
-        if (ltype == UINT64STAR_T) {
-          if (rtype == UINT64_T)
-            // UINT64STAR_T << UINT64_T
-            // pointer arithmetic: factor of 2^3 of integer operand
-            emit_left_shift_by(current_temporary(), 3);
-          else
-            // UINT64STAR_T << UINT64STAR_T
-            syntax_error_message("(uint64_t*) << (uint64_t*) is undefined");
-        } else if (rtype == UINT64STAR_T) {
-          // UINT64_T << UINT64STAR_T
-          // pointer arithmetic: factor of 2^3 of integer operand
-          emit_left_shift_by(previous_temporary(), 3);
-  
-          ltype = UINT64STAR_T;
-        }
-  
-        emit_sll(previous_temporary(), previous_temporary(), current_temporary());
-  
-      } else if (operator_symbol == SYM_SRL) {
-        if (ltype == UINT64STAR_T) {
-          if (rtype == UINT64_T) {
-            // UINT64STAR_T >> UINT64_T
-            // pointer arithmetic: factor of 2^3 of integer operand
-            emit_left_shift_by(current_temporary(), 3);
-            emit_sub(previous_temporary(), previous_temporary(), current_temporary());
-          } else {
-            // UINT64STAR_T >> UINT64STAR_T
-            // pointer arithmetic: (left_term >> right_term) / SIZEOFUINT64
-            emit_sub(previous_temporary(), previous_temporary(), current_temporary());
-            emit_addi(current_temporary(), REG_ZR, SIZEOFUINT64);
-            emit_divu(previous_temporary(), previous_temporary(), current_temporary());
-  
-            ltype = UINT64_T;
-          }
-        } else if (rtype == UINT64STAR_T)
-          // UINT64_T >> UINT64STAR_T
-          syntax_error_message("(uint64_t) >> (uint64_t*) is undefined");
-        else
-          // UINT64_T >> UINT64_T
-          emit_srl(previous_temporary(), previous_temporary(), current_temporary());
-      }
-  
-      tfree(1);
-    }
-  
-    // assert: allocated_temporaries == n + 1
-  
-    return ltype;
-  }
 
 uint64_t compile_expression() {
   uint64_t ltype;
@@ -3989,7 +4854,7 @@ uint64_t compile_expression() {
 
   // assert: n = allocated_temporaries
 
-  ltype = compile_bitwise_expression();
+  ltype = compile_simple_expression();
 
   // assert: allocated_temporaries == n + 1
 
@@ -3999,7 +4864,7 @@ uint64_t compile_expression() {
 
     get_symbol();
 
-    rtype = compile_bitwise_expression();
+    rtype = compile_simple_expression();
 
     // assert: allocated_temporaries == n + 2
 
@@ -5375,12 +6240,10 @@ void reset_instruction_counters() {
   ic_jal   = 0;
   ic_jalr  = 0;
   ic_ecall = 0;
-  ic_sll   = 0;
-  ic_srl   = 0;
 }
 
 uint64_t get_total_number_of_instructions() {
-  return ic_lui + ic_addi + ic_add + ic_sub + ic_mul + ic_divu + ic_remu + ic_sltu + ic_ld + ic_sd + ic_beq + ic_jal + ic_jalr + ic_ecall + ic_srl + ic_sll;
+  return ic_lui + ic_addi + ic_add + ic_sub + ic_mul + ic_divu + ic_remu + ic_sltu + ic_ld + ic_sd + ic_beq + ic_jal + ic_jalr + ic_ecall;
 }
 
 void print_instruction_counter(uint64_t total, uint64_t counter, char* mnemonics) {
@@ -5417,10 +6280,6 @@ void print_instruction_counters() {
   print_instruction_counter(ic, ic_divu, "divu");
   print(", ");
   print_instruction_counter(ic, ic_remu, "remu");
-  print(", ");
-  print_instruction_counter(ic, ic_sll, "sll");
-  print(", ");
-  print_instruction_counter(ic, ic_srl, "srl");
   println();
 
   printf1("%s: control: ", selfie_name);
@@ -5576,18 +6435,6 @@ void emit_ecall() {
 
   ic_ecall = ic_ecall + 1;
 }
-
-void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-    emit_instruction(encode_r_format(F7_SLL, rs2, rs1, F3_SLL, rd, OP_OP));
-  
-    ic_sll = ic_sll + 1;
-  }
-  
-  void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-    emit_instruction(encode_r_format(F7_SRL, rs2, rs1, F3_SRL, rd, OP_OP));
-  
-    ic_srl = ic_srl + 1;
-  }
 
 void fixup_relative_BFormat(uint64_t from_address) {
   uint64_t instruction;
@@ -7472,24 +8319,6 @@ void print_data(uint64_t data) {
   printf1(".quad %x", (char*) data);
 }
 
-void do_sll() {
-  if (rd != REG_ZR)
-    // semantics of add
-    *(registers + rd) = *(registers + rs1) << *(registers + rs2);
-  
-  pc = pc + INSTRUCTIONSIZE;
-  
-  ic_sll = ic_sll + 1;
-  }
-void do_srl() {
-  if (rd != REG_ZR)
-    // semantics of add
-    *(registers + rd) = *(registers + rs1) >> *(registers + rs2);
-  
-  pc = pc + INSTRUCTIONSIZE;
-  
-  ic_srl = ic_srl + 1;
-  }
 // -----------------------------------------------------------------
 // -------------------------- REPLAY ENGINE ------------------------
 // -----------------------------------------------------------------
@@ -7834,7 +8663,7 @@ void decode_execute() {
 
       return;
     }
-  } else if (opcode == OP_OP) { // could be ADD, SUB, MUL, DIVU, REMU, SLTU, 
+  } else if (opcode == OP_OP) { // could be ADD, SUB, MUL, DIVU, REMU, SLTU
     decode_r_format();
 
     if (funct3 == F3_ADD) { // = F3_SUB = F3_MUL
@@ -7982,47 +8811,7 @@ void decode_execute() {
 
         return;
       }
-    } else if (funct7 == F7_SLL) {
-      if (debug) {
-        if (record) {
-          record_lui_addi_add_sub_mul_sltu_jal_jalr();
-          do_sll();
-        } else if (disassemble) {
-          print_add_sub_mul_divu_remu_sltu("add");
-          if (execute) {
-            print_add_sub_mul_divu_remu_sltu_before();
-            do_sll();
-            print_addi_add_sub_mul_divu_remu_sltu_after();
-          }
-          println();
-        } else if (symbolic) {
-          constrain_add_sub_mul_divu_remu_sltu("bvadd");
-          do_sll();
-      }
-      } else
-        do_sll();
-  
-        return;
-    } else if (funct7 == F7_SRL) {
-      if (debug) {
-        if (record) {
-          record_lui_addi_add_sub_mul_sltu_jal_jalr();
-          do_srl();
-        } else if (disassemble) {
-          print_add_sub_mul_divu_remu_sltu("add");
-          if (execute) {
-            print_add_sub_mul_divu_remu_sltu_before();
-            do_srl();
-            print_addi_add_sub_mul_divu_remu_sltu_after();
-          }
-          println();
-        } else if (symbolic) {
-          constrain_add_sub_mul_divu_remu_sltu("bvadd");
-          do_srl();
-        }
-      } else
-        do_srl();    
-      }
+    }
   } else if (opcode == OP_BRANCH) {
     decode_b_format();
 
@@ -9239,6 +10028,17 @@ uint64_t is_boot_level_zero() {
   return 0;
 }
 
+void boot_loader() {
+  current_context = create_context(MY_CONTEXT, 0);
+
+  up_load_binary(current_context);
+
+  // pass binary name as first argument by replacing memory size
+  set_argument(binary_name);
+
+  up_load_arguments(current_context, number_of_remaining_arguments(), remaining_arguments());
+}
+
 uint64_t selfie_run(uint64_t machine) {
   uint64_t exit_code;
 
@@ -9274,14 +10074,7 @@ uint64_t selfie_run(uint64_t machine) {
   reset_interpreter();
   reset_microkernel();
 
-  current_context = create_context(MY_CONTEXT, 0);
-
-  up_load_binary(current_context);
-
-  // pass binary name as first argument by replacing memory size
-  set_argument(binary_name);
-
-  up_load_arguments(current_context, number_of_remaining_arguments(), remaining_arguments());
+  boot_loader();
 
   printf3("%s: selfie executing %s with %dMB physical memory on ", selfie_name,
     binary_name,
@@ -9706,6 +10499,9 @@ uint64_t selfie() {
 
       if (string_compare(option, "-c"))
         selfie_compile();
+      else if(string_compare(option, "-a")){
+        assembly_compile();
+      }
 
       else if (number_of_remaining_arguments() == 0) {
         // remaining options have at least one argument
